@@ -111,7 +111,7 @@ function PaymentForm({
           }
         }}
         options={{
-          wallets: {
+          paymentMethods: {
             applePay: "auto",
             googlePay: "never",
           },
