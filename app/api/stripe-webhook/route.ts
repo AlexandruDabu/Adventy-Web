@@ -47,11 +47,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Update buyer as paid
+        // Update buyer as paid (gift: false since they're the buyer)
         const { error } = await supabase
           .from("emails")
           .update({
             paid: true,
+            gift: false,
             calendar_template_id: calendarTemplateId,
           })
           .eq("email", email);
@@ -62,15 +63,15 @@ export async function POST(request: NextRequest) {
           console.log("✅ User marked as paid via webhook:", email);
         }
 
-        // If this is a gift purchase, create entry for friend
+        // If this is a gift purchase, create entry for friend with gift: true
         if (friendEmail && friendEmail.length > 0) {
           const { error: friendError } = await supabase.from("emails").upsert(
             {
               email: friendEmail,
               paid: true,
+              gift: true,
               calendar_template_id: calendarTemplateId,
               answers: answers,
-              gift: true,
             },
             {
               onConflict: "email",

@@ -30,14 +30,19 @@ export const useUser = () => {
   );
 
   const updateUserPaid = useCallback(
-    async (email: string, calendarTemplateId: string): Promise<boolean> => {
+    async (
+      email: string,
+      calendarTemplateId: string,
+      isGift: boolean = false
+    ): Promise<boolean> => {
       setLoading(true);
       setError(null);
 
       try {
         const success = await userRepository.updateUserPaid(
           email,
-          calendarTemplateId
+          calendarTemplateId,
+          isGift
         );
         if (!success) {
           setError("Failed to update payment status");
@@ -74,6 +79,35 @@ export const useUser = () => {
     return userRepository.getUserFromLocalStorage();
   }, []);
 
+  const createGiftRecipient = useCallback(
+    async (
+      email: string,
+      calendarTemplateId: string,
+      answers?: Record<string, any>
+    ): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const success = await userRepository.createGiftRecipient(
+          email,
+          calendarTemplateId,
+          answers
+        );
+        if (!success) {
+          setError("Failed to create gift recipient");
+        }
+        return success;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   const clearLocalStorage = useCallback((): void => {
     userRepository.clearLocalStorage();
   }, []);
@@ -84,6 +118,7 @@ export const useUser = () => {
     saveEmail,
     updateUserPaid,
     checkIfUserPaid,
+    createGiftRecipient,
     getUserFromLocalStorage,
     clearLocalStorage,
   };

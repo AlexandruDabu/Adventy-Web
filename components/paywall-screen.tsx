@@ -30,7 +30,7 @@ export function PaywallScreen({
   const [friendEmail, setFriendEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const { createPaymentIntent, loading } = useStripe();
-  const { updateUserPaid } = useUser();
+  const { updateUserPaid, createGiftRecipient } = useUser();
   const ctaButtonRef = useRef<HTMLDivElement>(null);
 
   const handlePriceSelection = (price: number) => {
@@ -93,8 +93,14 @@ export function PaywallScreen({
   };
 
   const handlePaymentSuccess = async () => {
-    // Update user as paid in Supabase
-    await updateUserPaid(userEmail, calendarTemplateId);
+    // Update buyer as paid in Supabase (gift: false for buyer)
+    await updateUserPaid(userEmail, calendarTemplateId, false);
+
+    // If this is a gift purchase, also create entry for the friend
+    if (selectedPrice === 9.99 && friendEmail) {
+      await createGiftRecipient(friendEmail, calendarTemplateId, answers);
+      console.log("✅ Gift calendar created for friend:", friendEmail);
+    }
 
     // Close drawer and redirect to home with success param
     setShowPaymentDrawer(false);

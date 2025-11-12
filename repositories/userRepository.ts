@@ -4,6 +4,7 @@ export type User = {
   id?: number;
   email: string;
   paid: boolean;
+  gift?: boolean;
   created_at?: string;
   answers?: Record<string, any>;
   calendar_template_id?: string;
@@ -62,7 +63,8 @@ export const userRepository = {
    */
   async updateUserPaid(
     email: string,
-    calendarTemplateId: string
+    calendarTemplateId: string,
+    isGift: boolean = false
   ): Promise<boolean> {
     try {
       const supabase = createClient();
@@ -71,6 +73,7 @@ export const userRepository = {
         .from("emails")
         .update({
           paid: true,
+          gift: isGift,
           calendar_template_id: calendarTemplateId,
         })
         .eq("email", email);
@@ -86,6 +89,7 @@ export const userRepository = {
         if (userData) {
           const parsed = JSON.parse(userData);
           parsed.paid = true;
+          parsed.gift = isGift;
           parsed.calendar_template_id = calendarTemplateId;
           localStorage.setItem("user_data", JSON.stringify(parsed));
         }
@@ -137,6 +141,69 @@ export const userRepository = {
       return JSON.parse(userData) as User;
     } catch {
       return null;
+    }
+  },
+
+  /**
+   * Create or update a gift recipient
+   */
+  async createGiftRecipient(
+    email: string,
+    calendarTemplateId: string,
+    answers?: Record<string, any>
+  ): Promise<boolean> {
+    try {
+      const supabase = createClient();
+
+      // First, check if the user exists
+      const { data: existingUser, error: selectError } = await supabase
+        .from("emails")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (selectError && selectError.code !== "PGRST116") {
+        // PGRST116 is "not found" error, which is fine
+        console.error("Error checking for existing user:", selectError);
+        return false;
+      }
+
+      if (existingUser) {
+        // User exists, update them
+        const { error: updateError } = await supabase
+          .from("emails")
+          .update({
+            paid: true,
+            gift: true,
+            calendar_template_id: calendarTemplateId,
+            answers: answers || null,
+          })
+          .eq("email", email);
+
+        if (updateError) {
+          console.error("Error updating gift recipient:", updateError);
+          return false;
+        }
+      } else {
+        // User doesn't exist, create them
+        const { error: insertError } = await supabase.from("emails").insert({
+          email,
+          paid: true,
+          gift: true,
+          calendar_template_id: calendarTemplateId,
+          answers: answers || null,
+        });
+
+        if (insertError) {
+          console.error("Error creating gift recipient:", insertError);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in createGiftRecipient:", error);
+      return false;
     }
   },
 
