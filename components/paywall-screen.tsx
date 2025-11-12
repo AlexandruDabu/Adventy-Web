@@ -79,6 +79,15 @@ export function PaywallScreen({
       }
     }
 
+    // Send InitiateCheckout event to TikTok Pixel (once, when button is clicked)
+    sendEcommerceEvent(
+      TikTokEvent.INITIATE_CHECKOUT,
+      "advent-calendar",
+      "Personalized Advent Calendar",
+      selectedPrice,
+      "USD"
+    );
+
     console.log("Creating payment intent for:", {
       amount: selectedPrice,
       email: userEmail,

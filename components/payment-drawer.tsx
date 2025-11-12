@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { sendEcommerceEvent, TikTokEvent } from "@/utils/tiktokPixel";
 
 // Check if Stripe key is available
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
@@ -60,15 +59,6 @@ function PaymentForm({
     setIsProcessing(true);
     setErrorMessage(null);
 
-    // Send InitiateCheckout event to TikTok Pixel
-    sendEcommerceEvent(
-      TikTokEvent.INITIATE_CHECKOUT,
-      "advent-calendar",
-      "Personalized Advent Calendar",
-      amount,
-      "USD"
-    );
-
     try {
       const { error } = await stripe.confirmPayment({
         elements,
@@ -101,15 +91,6 @@ function PaymentForm({
 
           setIsProcessing(true);
           setErrorMessage(null);
-
-          // Send InitiateCheckout event for Express Checkout
-          sendEcommerceEvent(
-            TikTokEvent.INITIATE_CHECKOUT,
-            "advent-calendar",
-            "Personalized Advent Calendar",
-            amount,
-            "USD"
-          );
 
           try {
             const { error } = await stripe.confirmPayment({
