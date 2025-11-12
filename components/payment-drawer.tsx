@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Elements,
   PaymentElement,
+  ExpressCheckoutElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -80,15 +81,59 @@ function PaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className='space-y-6'>
+      <ExpressCheckoutElement
+        onConfirm={async (event) => {
+          if (!stripe || !elements) {
+            return;
+          }
+
+          setIsProcessing(true);
+          setErrorMessage(null);
+
+          try {
+            const { error } = await stripe.confirmPayment({
+              elements,
+              confirmParams: {
+                return_url: `${window.location.origin}?payment_success=true`,
+              },
+              redirect: "if_required",
+            });
+
+            if (error) {
+              setErrorMessage(error.message || "Payment failed");
+              setIsProcessing(false);
+            } else {
+              onSuccess();
+            }
+          } catch (err) {
+            setErrorMessage("An unexpected error occurred");
+            setIsProcessing(false);
+          }
+        }}
+        options={{
+          wallets: {
+            applePay: "auto",
+            googlePay: "never",
+          },
+        }}
+      />
+
+      <div className='relative'>
+        <div className='absolute inset-0 flex items-center'>
+          <span className='w-full border-t' />
+        </div>
+        <div className='relative flex justify-center text-xs uppercase'>
+          <span className='bg-background px-2 text-muted-foreground'>
+            Or pay with card
+          </span>
+        </div>
+      </div>
+
       <PaymentElement
         options={{
           layout: {
             type: "tabs",
             defaultCollapsed: false,
-          },
-          wallets: {
-            applePay: "auto",
-            googlePay: "never",
           },
         }}
         onReady={() => console.log("PaymentElement ready")}
