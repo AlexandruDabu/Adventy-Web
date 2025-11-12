@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { sendEcommerceEvent, TikTokEvent } from "@/utils/tiktokPixel";
 
 // Check if Stripe key is available
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
@@ -34,6 +35,7 @@ type PaymentFormProps = {
   amount: number;
   onSuccess: () => void;
   onClose: () => void;
+  userEmail: string;
 };
 
 function PaymentForm({
@@ -41,6 +43,7 @@ function PaymentForm({
   amount,
   onSuccess,
   onClose,
+  userEmail,
 }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -56,6 +59,15 @@ function PaymentForm({
 
     setIsProcessing(true);
     setErrorMessage(null);
+
+    // Send InitiateCheckout event to TikTok Pixel
+    sendEcommerceEvent(
+      TikTokEvent.INITIATE_CHECKOUT,
+      "advent-calendar",
+      "Personalized Advent Calendar",
+      amount,
+      "USD"
+    );
 
     try {
       const { error } = await stripe.confirmPayment({
@@ -89,6 +101,15 @@ function PaymentForm({
 
           setIsProcessing(true);
           setErrorMessage(null);
+
+          // Send InitiateCheckout event for Express Checkout
+          sendEcommerceEvent(
+            TikTokEvent.INITIATE_CHECKOUT,
+            "advent-calendar",
+            "Personalized Advent Calendar",
+            amount,
+            "USD"
+          );
 
           try {
             const { error } = await stripe.confirmPayment({
@@ -181,6 +202,7 @@ type PaymentDrawerProps = {
   onSuccess: () => void;
   clientSecret: string | null;
   amount: number;
+  userEmail: string;
 };
 
 export function PaymentDrawer({
@@ -189,6 +211,7 @@ export function PaymentDrawer({
   onSuccess,
   clientSecret,
   amount,
+  userEmail,
 }: PaymentDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -225,6 +248,7 @@ export function PaymentDrawer({
                 amount={amount}
                 onSuccess={onSuccess}
                 onClose={onClose}
+                userEmail={userEmail}
               />
             </Elements>
           ) : (

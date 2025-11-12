@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,11 @@ import starAnimation from "@/public/star.json";
 import { useStripe } from "@/hooks/useStripe";
 import { useUser } from "@/hooks/useUser";
 import { PaymentDrawer } from "@/components/payment-drawer";
+import {
+  identifyUser,
+  sendEcommerceEvent,
+  TikTokEvent,
+} from "@/utils/tiktokPixel";
 
 type PaywallScreenProps = {
   userEmail: string;
@@ -32,6 +37,13 @@ export function PaywallScreen({
   const { createPaymentIntent, loading } = useStripe();
   const { updateUserPaid, createGiftRecipient } = useUser();
   const ctaButtonRef = useRef<HTMLDivElement>(null);
+
+  // Identify user with TikTok Pixel when component mounts
+  useEffect(() => {
+    if (userEmail) {
+      identifyUser({ email: userEmail });
+    }
+  }, [userEmail]);
 
   const handlePriceSelection = (price: number) => {
     setSelectedPrice(price);
@@ -93,6 +105,17 @@ export function PaywallScreen({
   };
 
   const handlePaymentSuccess = async () => {
+    // Send Purchase event to TikTok Pixel
+    if (selectedPrice) {
+      sendEcommerceEvent(
+        TikTokEvent.PURCHASE,
+        "advent-calendar",
+        "Personalized Advent Calendar",
+        selectedPrice,
+        "USD"
+      );
+    }
+
     // Update buyer as paid in Supabase (gift: false for buyer)
     await updateUserPaid(userEmail, calendarTemplateId, false);
 
@@ -337,6 +360,7 @@ export function PaywallScreen({
         onSuccess={handlePaymentSuccess}
         clientSecret={clientSecret}
         amount={selectedPrice || 0}
+        userEmail={userEmail}
       />
     </div>
   );
