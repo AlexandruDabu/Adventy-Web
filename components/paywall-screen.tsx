@@ -167,11 +167,11 @@ export function PaywallScreen({
 
   const features = [
     "Personalized daily content",
+    "Support a charitable cause",
     "24 days of joy and inspiration",
     "Access via our mobile app",
     "In-app challenges & rewards",
     "Start December 1st",
-    "Support a charitable cause",
   ];
 
   return (
